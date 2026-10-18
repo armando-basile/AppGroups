@@ -16,6 +16,8 @@ jobs:
   release:
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    # The signing secrets are stored as environment secrets of the "Main" environment (the name is case-sensitive).
+    environment: Main
     steps:
       - name: Check tag format
         id: version
