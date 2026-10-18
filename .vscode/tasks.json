@@ -1,0 +1,56 @@
+{
+    "version": "2.0.0",
+    "options": {
+        "cwd": "${workspaceFolder}",
+        "env": {
+            "JAVA_HOME": "/usr/lib/jvm/temurin-21-jdk"
+        }
+    },
+    "tasks": [
+        {
+            "label": "Build debug",
+            "type": "shell",
+            "command": "./gradlew assembleDebug",
+            "group": "build",
+            "problemMatcher": []
+        },
+        {
+            "label": "Build release",
+            "type": "shell",
+            "command": "./gradlew assembleRelease",
+            "group": "build",
+            "problemMatcher": []
+        },
+        {
+            "label": "Install debug on device",
+            "type": "shell",
+            "command": "adb install -r app/build/outputs/apk/debug/app-debug.apk",
+            "dependsOn": "Build debug",
+            "problemMatcher": []
+        },
+        {
+            "label": "Install release on device",
+            "type": "shell",
+            "command": "adb install -r app/build/outputs/apk/release/app-release.apk",
+            "dependsOn": "Build release",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "Lint",
+            "type": "shell",
+            "command": "./gradlew lintDebug",
+            "group": "test",
+            "problemMatcher": []
+        },
+        {
+            "label": "Clean",
+            "type": "shell",
+            "command": "./gradlew clean",
+            "problemMatcher": []
+        }
+    ]
+}
