@@ -48,14 +48,25 @@ jobs:
           KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
         run: |
           # Without a real key the APK would be signed with a throw-away key and no device could update to it.
+          missing=""
           for name in KEYSTORE_BASE64 KEYSTORE_PASSWORD KEY_ALIAS KEY_PASSWORD; do
-            if [ -z "${!name}" ]; then
-              echo "Missing repository secret for $name (ANDROID_${name})" >&2
-              exit 1
-            fi
+            [ -n "${!name}" ] || missing="$missing ANDROID_$name"
           done
+          if [ -n "$missing" ]; then
+            echo "::error title=Missing repository secrets::Empty or undefined:${missing}. Add them under Settings > Secrets and variables > Actions > Repository secrets."
+            exit 1
+          fi
+
           keystore="$RUNNER_TEMP/release.jks"
-          echo "$KEYSTORE_BASE64" | base64 --decode > "$keystore"
+          # Pasted values often carry line breaks or spaces, which are not part of the keystore.
+          if ! printf '%s' "$KEYSTORE_BASE64" | tr -d '[:space:]' | base64 --decode > "$keystore" 2>/dev/null; then
+            echo "::error title=Invalid keystore secret::ANDROID_KEYSTORE_BASE64 is not valid base64. Regenerate it with: base64 -w0 appgroups-release.jks"
+            exit 1
+          fi
+          if ! keytool -list -keystore "$keystore" -alias "$KEY_ALIAS" -storepass:env KEYSTORE_PASSWORD > /dev/null 2>&1; then
+            echo "::error title=Keystore check failed::The keystore could not be opened with ANDROID_KEYSTORE_PASSWORD, or it has no alias named by ANDROID_KEY_ALIAS."
+            exit 1
+          fi
           echo "KEYSTORE_FILE=$keystore" >> "$GITHUB_ENV"
 
       - name: Build release APK
